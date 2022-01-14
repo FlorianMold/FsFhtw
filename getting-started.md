@@ -4,14 +4,15 @@
 
 Known Commands:
 - Help: Prints all known commands
-- ShowStations: Shows all available train-stations
-- Search <from> <to>: Shows a list of scheduled train departures with a ticket-number and train-type.
+- ShowTrainStations: Shows all available train-stations
+- SearchTrips <from> <to>: Shows a list of scheduled train departures with a ticket-number and train-type.
 - RequestTicket <ticketNr>: Show ticket information for ticket-nr. (from, to, price, departure, train-type, ticket-type)
 - AddToCart <ticketNr> <amount> <ticketType>: Puts the ticket inside a cart.
-- ShowCart: Shows all tickets, departures with prices.
+- PrintCart: Shows all tickets, departures with prices.
 - RemoveFromCart <ticketNr> <ticketType> <quantity>: Removes the ticket with the ticket-number and the ticket-type from the cart.
 - ClearCart: Removes all tickets from the cart.
 - PayCart <payment-method>: Pays the items in the cart (randomly fails on some payment-methods).
+- ShowPaidOrders: Shows all paid orders of the past.
 
 ## Types
 ```f#
@@ -27,7 +28,7 @@ type PaymentMethod = VISA | PayPal | Klarna | ...
 
 ### Displaying all train-stations
 ```shell
-~ ShowStations
+~ PrintTrainStations
 
 vienna, linz, graz, salzburg, eisenstadt, bregenz, innsbruck, klagenfurt, St. poelten
 ```
@@ -35,8 +36,8 @@ vienna, linz, graz, salzburg, eisenstadt, bregenz, innsbruck, klagenfurt, St. po
 ### Searching for a ticket
 
 ```shell
-# Search <from: Station> <to: Station>
-~ Search vienna linz
+# SearchTrips <from: Station> <to: Station>
+~ SearchTrips vienna linz
 
 --------------------------------------------------
 | ticket-nr | from | to | departure | trainType |
@@ -74,8 +75,8 @@ Ticket-number '1' with price '7$' was added to cart.
 
 ### Showing the tickets
 ```shell
-# ShowCart
-~ ShowCart
+# PrintCart
+~ PrintCart
 
 ---------------------------------------------------------------------------------
 | ticketNr | from | to | price | departure | train-type | ticketType | quantity |
@@ -139,4 +140,18 @@ Total: '10$'
 ~ PayCart VISA
 
 Your credit-card has not been accepted. Please use another payment-method.
+```
+
+### Show paid orders
+
+```shell
+# ShowPaidOrders
+~ ShowPaidOrders
+
+---------------------------------------------------------------------------------------------------------
+| ticketNr | from | to | price | departure | train-type | ticketType | quantity | date | payment-method |
+---------------------------------------------------------------------------------------------------------
+| 1 | vienna | linz | '10$' | 15.01.2022 11:00 | Railjet | AdultTicket | 1 | '15.01.2022' | PayPal |
+| 1 | vienna | linz | '7$' | 15.01.2022 11:00 | Railjet | AdultTicket | 1 | '14.01.2022' | Klarna |
+---------------------------------------------------------------------------------------------------------
 ```
