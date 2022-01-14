@@ -6,7 +6,7 @@ Known Commands:
 - Help: Prints all known commands
 - ShowTrainStations: Shows all available train-stations
 - SearchTrips <from> <to>: Shows a list of scheduled train departures with a ticket-number and train-type.
-- RequestTicket <ticketNr>: Show ticket information for ticket-nr. (from, to, price, departure, train-type, ticket-type)
+- RequestTicket <from: Station> <to: Station>: Show ticket information for ticket-nr. (from, to, price, departure, train-type, ticket-type)
 - AddToCart <ticketNr> <amount> <ticketType>: Puts the ticket inside a cart.
 - PrintCart: Shows all tickets, departures with prices.
 - RemoveFromCart <ticketNr> <ticketType> <quantity>: Removes the ticket with the ticket-number and the ticket-type from the cart.
@@ -52,8 +52,8 @@ vienna, linz, graz, salzburg, eisenstadt, bregenz, innsbruck, klagenfurt, St. po
 ### Request a ticket
 
 ```shell
-# RequestTicket <ticketNr: TicketNr>
-~ RequestTicket 1
+# RequestTicket <from: Station> <to: Station>
+~ RequestTicket vienna linz
 
 ------------------------------------------------------------------------
 | ticketNr | from | to | price | departure | train-type | ticketType |
