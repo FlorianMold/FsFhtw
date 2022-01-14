@@ -19,3 +19,5 @@ Execute the following command.
 ```bash
 dotnet run src/FsFhtw/FsFhtw.fsproj
 ```
+
+Florian Mold & Aytac Karakaya
