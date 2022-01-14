@@ -138,5 +138,5 @@ Total: '10$'
 # Fail Case
 ~ PayCart VISA
 
-Your credit-card has not been accepted. Please use another payment-method
+Your credit-card has not been accepted. Please use another payment-method.
 ```
