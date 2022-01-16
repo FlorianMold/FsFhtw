@@ -12,6 +12,7 @@ type DepartureTrainStation = TrainStation
 
 type ArrivalTrainStation = TrainStation
 
+
 type Price = { price: float }
 type TicketPrice = Price
 type TripPrice = Price
@@ -70,6 +71,45 @@ type PaidCartEntry =
       orderDate: DateTime
       paymentMethod: PaymentMethod }
 
+type TrainType = Railjet | Nightjet | Eurocity | Intercity | Cityjet
+
+type TicketNumber = { nr: int }
+
+type TicketType = SeniorTicket | JuniorTicket | AdultTicket | PetTicket
+
+type TicketQuantity = { quantity: int }
+
+type TicketPrice = { price: float }
+
+type TimeStamp = { timestamp: DateTime }
+type DepartureTime = TimeStamp
+type ArrivalTime = TimeStamp
+
+type PaymentMethod = VISA | PayPal | Klarna
+
+type Ticket = {
+    ticketNr: TicketNumber
+    ticketPrice: TicketPrice
+    ticketType: TicketType
+    departure: DepartureTrainStation
+    arrival: ArrivalTrainStation
+    departureTime: DepartureTime
+    arrivalTime: ArrivalTime
+}
+
+type ShoppingCartEntry = {
+    ticket: Ticket
+    quantity: TicketQuantity
+}
+
+type PaidCartEntry = {
+    ticket: Ticket
+    quantity: TicketQuantity
+    orderDate: DateTime
+    paymentMethod: PaymentMethod
+}
+
+
 type EmptyCart = UnpaidCart
 
 type UnpaidCart = { tickets: list<ShoppingCartEntry> }
@@ -97,6 +137,9 @@ type PrintStations = list<TrainStation> -> unit
 
 type SearchTrips = ArrivalTrainStation -> DepartureTrainStation -> list<Ticket>
 type PrintSearchTrips = list<Ticket> -> unit
+
+type GetTrainStations = list<TrainStation>
+type PrintStations = list<TrainStation> -> unit
 
 type RequestTicket = TicketNumber -> list<Ticket>
 type PrintRequestTicket = list<Ticket> -> unit
