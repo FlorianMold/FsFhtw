@@ -67,8 +67,8 @@ vienna, linz, graz, salzburg, eisenstadt, bregenz, innsbruck, klagenfurt, St. po
 ### Adding a ticket
 
 ```shell
-# AddToCart <ticketNr: TicketNr> <amount: TicketQuantity> <ticketType: TicketType>
-~ AddToCart 1 2 SeniorTicket
+# AddToCart <ticketNr: TicketNr> <ticketType: TicketType> <amount: TicketQuantity> 
+~ AddToCart 1 SeniorTicket 2
 
 Ticket-number '1' with price '7$' was added to cart.
 ```

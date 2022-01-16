@@ -40,7 +40,7 @@ type TicketType =
     | AdultTicket
     | PetTicket
 
-type TicketQuantity = { quantity: int }
+type TicketQuantity = int
 
 type TimeStamp = DateTime
 type DepartureTime = TimeStamp
@@ -61,9 +61,7 @@ type Ticket =
       departureTime: DepartureTime
       arrivalTime: ArrivalTime }
 
-type ShoppingCartEntry =
-    { ticket: Ticket
-      quantity: TicketQuantity }
+type ShoppingCartEntry = { ticket: Ticket; quantity: int }
 
 type PaidCartEntry =
     { ticket: Ticket
@@ -104,8 +102,8 @@ type GetTrainStations = list<TrainStation>
 type RequestTicket = TicketNumber -> list<Ticket>
 type PrintRequestTicket = list<Ticket> -> unit
 
-type AddToCart = TicketNumber -> TicketQuantity -> TicketType -> UnpaidCart
-type PrintAddToCart = UnpaidCart -> Ticket -> unit
+type AddTicketToCart = UnpaidCart -> TicketNumber -> TicketQuantity -> TicketType -> UnpaidCart
+type PrintAddTicketToCart = UnpaidCart -> Ticket -> unit
 
 type PrintCart = UnpaidCart -> unit
 
@@ -203,7 +201,7 @@ let rec createTicketFromTicketType (types: list<TicketType>) (idx: int) (trip: T
     | [] -> []
 
 // TODO: generate random tickets
-let generateTickets (trip: Trip) : list<Ticket> =
+let generateTickets (trip: Trip) (idx: int) : list<Ticket> =
     let randomTicketAmount = genTicketAmount maximumTicketAmount
 
     let ticketTypes =
@@ -212,28 +210,37 @@ let generateTickets (trip: Trip) : list<Ticket> =
           JuniorTicket
           PetTicket ]
 
-    Seq.init randomTicketAmount (fun idx -> createTicketFromTicketType ticketTypes (idx + 1) trip)
+    Seq.init randomTicketAmount (fun _ -> createTicketFromTicketType ticketTypes idx trip)
     |> List.concat
 
 // TODO: watch for exception
 let filterTrips (allTickets: Map<SimpleTrip, list<Ticket>>) (trip: SimpleTrip) : list<Ticket> = allTickets.Item trip
 
-let rec generateAllTrips (map: Map<SimpleTrip, list<Ticket>>) (trips: list<Trip>) : Map<SimpleTrip, list<Ticket>> =
+let rec generateAllTrips
+    (map: Map<SimpleTrip, list<Ticket>>)
+    (trips: list<Trip>)
+    (idx: int)
+    : Map<SimpleTrip, list<Ticket>> =
     match trips with
     | head :: tail ->
         generateAllTrips
             (map.Add(
                 { departure = head.departure.name
                   arrival = head.arrival.name },
-                generateTickets head
+                generateTickets head idx
             ))
             tail
+            (idx + 1)
     | [] -> map
 
-// This stores all trips in the application
-let allTickets = generateAllTrips Map.empty getAllTrips
+// This stores all tickets in the application, grouped-by trip
+let allTicketMap = generateAllTrips Map.empty getAllTrips 1
 
-let filteredTrips = filterTrips allTickets
+// This stores all tickets of the application
+let allTicketsList: list<Ticket> =
+    allTicketMap.Values |> Seq.cast |> List.concat
+
+let filteredTrips = filterTrips allTicketMap
 
 let requestTicket (departure: DepartureTrainStation) (arrival: ArrivalTrainStation) =
     filteredTrips
@@ -251,3 +258,32 @@ let searchTrips (departure: DepartureTrainStation) (arrival: ArrivalTrainStation
         (function
         | _, x :: _ -> Some x
         | _ -> None)
+
+// Creates an empty cart
+let emptyCart () : UnpaidCart = { tickets = [] }
+
+let cart = { tickets = [] }
+
+// finds a ticket in the given list
+let findTicket (ticketNr: TicketNumber) (ticketType: TicketType) (tickets: list<Ticket>) : Ticket =
+    // TODO: watch for exception
+    tickets
+    |> List.find
+        (fun t ->
+            t.ticketNr.nr.Equals ticketNr.nr
+            && t.ticketType.Equals ticketType)
+
+let addTicketToCart
+    (cart: UnpaidCart)
+    (ticketNr: TicketNumber)
+    (ticketType: TicketType)
+    (ticketQuantity: TicketQuantity)
+    : UnpaidCart =
+    let ticketToAdd =
+        findTicket ticketNr ticketType allTicketsList
+
+    let entry =
+        { ticket = ticketToAdd
+          quantity = ticketQuantity }
+
+    { tickets = entry :: cart.tickets }

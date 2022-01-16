@@ -6,7 +6,9 @@ let main argv =
     printf "> "
 
     let initialState = Domain.init ()
-    let r = Domain.requestTicket {name = "Vienna"} {name = "Linz"}
-    printfn $"%A{r}"
+    let mutable cart = (Domain.emptyCart ())
+    cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 1
+    cart <- Domain.addTicketToCart cart {nr = 1} Domain.SeniorTicket 2
+    printfn $"%A{cart}"
     Repl.loop initialState
     0 // return an integer exit code
