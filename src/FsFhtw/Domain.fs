@@ -269,6 +269,19 @@ let findTicket (ticketNr: TicketNumber) (ticketType: TicketType) (tickets: list<
             t.ticketNr.nr.Equals ticketNr.nr
             && t.ticketType.Equals ticketType)
 
+let equalsShoppingCartEntry (ticketNr: TicketNumber) (ticketType: TicketType) (item: ShoppingCartEntry) =
+    (item.ticket.ticketNr.Equals ticketNr
+     && item.ticket.ticketType.Equals ticketType)
+
+let isTicketAlreadyInCart (cart: UnpaidCart) (ticketNr: TicketNumber) (ticketType: TicketType) =
+    cart.tickets
+    |> List.filter (equalsShoppingCartEntry ticketNr ticketType)
+
+// returns a new cart without the ticket
+let removeTicketFromShoppingList (tickets: list<ShoppingCartEntry>) (ticketNr: TicketNumber) (ticketType: TicketType) =
+    tickets
+    |> List.filter (fun item -> not (equalsShoppingCartEntry ticketNr ticketType item))
+
 // TODO: check if item is already in the cart, and sum the quantities, otherwise add the element
 let addTicketToCart
     (cart: UnpaidCart)
@@ -276,14 +289,26 @@ let addTicketToCart
     (ticketType: TicketType)
     (ticketQuantity: TicketQuantity)
     : UnpaidCart =
+    // look for the ticket to add in every
     let ticketToAdd =
         findTicket ticketNr ticketType allTicketsList
 
-    let entry =
-        { ticket = ticketToAdd
-          quantity = ticketQuantity }
+    let foundCartItems =
+        isTicketAlreadyInCart cart ticketNr ticketType
 
-    { tickets = entry :: cart.tickets }
+    let newItem =
+        match foundCartItems with
+        | x :: _ ->
+            { ticket = x.ticket
+              quantity = x.quantity + ticketQuantity }
+        | [] ->
+            { ticket = ticketToAdd
+              quantity = ticketQuantity }
+
+    let newCart =
+        removeTicketFromShoppingList cart.tickets ticketNr ticketType
+
+    { tickets = newItem :: newCart }
 
 let removeTicketFromCart
     (cart: UnpaidCart)
@@ -291,17 +316,12 @@ let removeTicketFromCart
     (ticketType: TicketType)
     (ticketQuantity: TicketQuantity)
     : UnpaidCart =
-    let filter (item: ShoppingCartEntry) =
-        (item.ticket.ticketNr.Equals ticketNr
-         && item.ticket.ticketType.Equals ticketType)
-
     let newCart =
-        cart.tickets
-        |> List.filter (fun item -> not (filter item))
+        removeTicketFromShoppingList cart.tickets ticketNr ticketType
 
     let newItem =
         cart.tickets
-        |> List.filter filter
+        |> List.filter (equalsShoppingCartEntry ticketNr ticketType)
         |> List.map
             (fun item ->
                 { ticket = item.ticket

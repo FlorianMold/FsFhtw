@@ -7,9 +7,10 @@ let main argv =
 
     let mutable cart = (Domain.init ())
     cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 1
-    cart <- Domain.addTicketToCart cart {nr = 1} Domain.SeniorTicket 2
+    cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 2
+    cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 2
 
-    cart <- Domain.removeTicketFromCart cart {nr = 1} Domain.JuniorTicket 2
+    cart <- Domain.removeTicketFromCart cart {nr = 1} Domain.AdultTicket 2
 
     cart <- Domain.clearCart cart
 
