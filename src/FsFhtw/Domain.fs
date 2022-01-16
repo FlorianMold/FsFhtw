@@ -84,7 +84,7 @@ type BounceReason =
     | CustomerCanceled
 
 type PaymentResult =
-    | Success
+    | Success of PaidCart
     | Bounce of BounceReason
 
 type Orders = list<PaidCart>
@@ -258,7 +258,8 @@ let searchTrips (departure: DepartureTrainStation) (arrival: ArrivalTrainStation
         | _ -> None)
 
 // Creates an empty cart
-let emptyCart () : UnpaidCart = { tickets = [] }
+let emptyUnpaidCart () : UnpaidCart = { tickets = [] }
+let emptyPaidCart () : PaidCart = { tickets = [] }
 
 // finds a ticket in the given list
 let findTicket (ticketNr: TicketNumber) (ticketType: TicketType) (tickets: list<Ticket>) : Ticket =
@@ -330,7 +331,34 @@ let removeTicketFromCart
 
     { tickets = List.append newItem newCart }
 
-let clearCart (cart: UnpaidCart) = emptyCart ()
+let clearCart (cart: UnpaidCart) = emptyUnpaidCart ()
 
+let rec convertUnpaidItemsToPaidItems
+    (unpaidItems: list<ShoppingCartEntry>)
+    (paymentMethod: PaymentMethod)
+    : list<PaidCartEntry> =
+    match unpaidItems with
+    | x :: xs ->
+        { ticket = x.ticket
+          quantity = x.quantity
+          orderDate = DateTime.Now
+          paymentMethod = paymentMethod }
+        :: convertUnpaidItemsToPaidItems xs paymentMethod
+    | [] -> []
 
-let init () : UnpaidCart = emptyCart ()
+let convertUnpaidCartToPaidCart (unpaidCart: UnpaidCart) (paymentMethod: PaymentMethod) : PaidCart =
+    { tickets = convertUnpaidItemsToPaidItems unpaidCart.tickets paymentMethod }
+
+let payCart (cart: UnpaidCart) (paymentMethod: PaymentMethod) : PaymentResult =
+    let paidCart =
+        convertUnpaidCartToPaidCart cart paymentMethod
+
+    Success paidCart
+
+type InitialState =
+    { unpaidCart: UnpaidCart
+      paidCart: list<PaidCart> }
+
+let init () : InitialState =
+    { unpaidCart = emptyUnpaidCart ()
+      paidCart = [emptyPaidCart ()] }
