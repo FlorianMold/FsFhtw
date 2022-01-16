@@ -1,7 +1,6 @@
 module Domain
 
 open System
-open System.Collections.Generic
 
 //type AustrianMainTrainStation = {Vienna | Linz | Graz | Eisenstadt | Bregenz | Salzburg | Innsbruck | Klagenfurt | St_Poelten}
 type AustrianMainTrainStation = { name: string }
@@ -273,6 +272,7 @@ let findTicket (ticketNr: TicketNumber) (ticketType: TicketType) (tickets: list<
             t.ticketNr.nr.Equals ticketNr.nr
             && t.ticketType.Equals ticketType)
 
+// TODO: check if item is already in the cart, and sum the quantities, otherwise add the element
 let addTicketToCart
     (cart: UnpaidCart)
     (ticketNr: TicketNumber)
@@ -287,3 +287,28 @@ let addTicketToCart
           quantity = ticketQuantity }
 
     { tickets = entry :: cart.tickets }
+
+let removeTicketFromCart
+    (cart: UnpaidCart)
+    (ticketNr: TicketNumber)
+    (ticketType: TicketType)
+    (ticketQuantity: TicketQuantity)
+    : UnpaidCart =
+    let filter (item: ShoppingCartEntry) =
+        (item.ticket.ticketNr.Equals ticketNr
+         && item.ticket.ticketType.Equals ticketType)
+
+    let newCart =
+        cart.tickets
+        |> List.filter (fun item -> not (filter item))
+
+    let newItem =
+        cart.tickets
+        |> List.filter filter
+        |> List.map
+            (fun item ->
+                { ticket = item.ticket
+                  quantity = item.quantity - ticketQuantity })
+        |> List.filter (fun item -> item.quantity > 0)
+
+    { tickets = List.append newItem newCart }

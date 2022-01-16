@@ -10,5 +10,9 @@ let main argv =
     cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 1
     cart <- Domain.addTicketToCart cart {nr = 1} Domain.SeniorTicket 2
     printfn $"%A{cart}"
+
+    cart <- Domain.removeTicketFromCart cart {nr = 1} Domain.JuniorTicket 2
+    printfn $"%A{cart}"
+
     Repl.loop initialState
     0 // return an integer exit code
