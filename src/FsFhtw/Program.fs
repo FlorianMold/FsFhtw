@@ -5,14 +5,13 @@ let main argv =
     printfn "Press CTRL+C to stop the program."
     printf "> "
 
-    let initialState = Domain.init ()
-    let mutable cart = (Domain.emptyCart ())
+    let mutable cart = (Domain.init ())
     cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 1
     cart <- Domain.addTicketToCart cart {nr = 1} Domain.SeniorTicket 2
-    printfn $"%A{cart}"
 
     cart <- Domain.removeTicketFromCart cart {nr = 1} Domain.JuniorTicket 2
-    printfn $"%A{cart}"
 
-    Repl.loop initialState
+    cart <- Domain.clearCart cart
+
+//    Repl.loop initialState
     0 // return an integer exit code

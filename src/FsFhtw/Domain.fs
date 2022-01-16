@@ -126,7 +126,6 @@ type Message =
     | IncrementBy of int
     | DecrementBy of int
 
-let init () : State = 0
 
 let update (msg: Message) (model: State) : State =
     match msg with
@@ -261,8 +260,6 @@ let searchTrips (departure: DepartureTrainStation) (arrival: ArrivalTrainStation
 // Creates an empty cart
 let emptyCart () : UnpaidCart = { tickets = [] }
 
-let cart = { tickets = [] }
-
 // finds a ticket in the given list
 let findTicket (ticketNr: TicketNumber) (ticketType: TicketType) (tickets: list<Ticket>) : Ticket =
     // TODO: watch for exception
@@ -312,3 +309,8 @@ let removeTicketFromCart
         |> List.filter (fun item -> item.quantity > 0)
 
     { tickets = List.append newItem newCart }
+
+let clearCart (cart: UnpaidCart) = emptyCart ()
+
+
+let init () : UnpaidCart = emptyCart ()
