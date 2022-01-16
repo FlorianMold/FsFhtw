@@ -164,7 +164,8 @@ let generateTrips =
         arrival = { name = "Bregenz" }
         basePrice = { price = 12 } } ]
 
-let maximumTicketAmount = 5
+// TODO: temporary lock this value
+let maximumTicketAmount = 1
 
 (*
     Returns a list of all possible trips
@@ -214,6 +215,7 @@ let generateTickets (trip: Trip) : list<Ticket> =
     Seq.init randomTicketAmount (fun idx -> createTicketFromTicketType ticketTypes (idx + 1) trip)
     |> List.concat
 
+// TODO: watch for exception
 let filterTrips (allTickets: Map<SimpleTrip, list<Ticket>>) (trip: SimpleTrip) : list<Ticket> = allTickets.Item trip
 
 let rec generateAllTrips (map: Map<SimpleTrip, list<Ticket>>) (trips: list<Trip>) : Map<SimpleTrip, list<Ticket>> =
@@ -231,14 +233,18 @@ let rec generateAllTrips (map: Map<SimpleTrip, list<Ticket>>) (trips: list<Trip>
 // This stores all trips in the application
 let allTickets = generateAllTrips Map.empty getAllTrips
 
-let searchTrips (departure: DepartureTrainStation) (arrival: ArrivalTrainStation) =
-    let filteredTrips =
-        filterTrips
-            allTickets
-            { departure = departure.name
-              arrival = arrival.name }
+let filteredTrips = filterTrips allTickets
 
+let requestTicket (departure: DepartureTrainStation) (arrival: ArrivalTrainStation) =
     filteredTrips
+        { departure = departure.name
+          arrival = arrival.name }
+
+let searchTrips (departure: DepartureTrainStation) (arrival: ArrivalTrainStation) =
+    let filteredTickets = requestTicket departure arrival
+
+    // group the elements by ticket id and take the first element of every list, because the ticket is always the same
+    filteredTickets
     |> List.groupBy (fun (ticket: Ticket) -> ticket.ticketNr.nr)
     // function -> https://stackoverflow.com/questions/37508934/difference-between-let-fun-and-function-in-f/37509083
     |> List.choose

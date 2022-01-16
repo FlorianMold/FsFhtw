@@ -6,7 +6,7 @@ let main argv =
     printf "> "
 
     let initialState = Domain.init ()
-    let r = Domain.searchTrips {name = "Vienna"} {name = "Linz"}
+    let r = Domain.requestTicket {name = "Vienna"} {name = "Linz"}
     printfn $"%A{r}"
     Repl.loop initialState
     0 // return an integer exit code
