@@ -7,9 +7,7 @@ let main argv =
     printfn "Press CTRL+C to stop the program."
     printf "> "
 
-    let state = (Domain.init ())
-    let mutable cart = state.unpaidCart
-
+    let mutable cart = (Domain.emptyUnpaidCart ())
     cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 1
     cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 2
     cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 2
