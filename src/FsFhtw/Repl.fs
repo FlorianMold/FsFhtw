@@ -10,14 +10,14 @@ type Message =
 
 type State = Domain.State
 
-let read (input : string) =
-    match input with
-    | Increment -> Domain.Increment |> DomainMessage
-    | Decrement -> Domain.Decrement |> DomainMessage
-    | IncrementBy v -> Domain.IncrementBy v |> DomainMessage
-    | DecrementBy v -> Domain.DecrementBy v |> DomainMessage
-    | Help -> HelpRequested
-    | ParseFailed  -> NotParsable input
+//let read (input : string) =
+//    match input with
+//    | Increment -> Domain.Increment |> DomainMessage
+//    | Decrement -> Domain.Decrement |> DomainMessage
+//    | IncrementBy v -> Domain.IncrementBy v |> DomainMessage
+//    | DecrementBy v -> Domain.DecrementBy v |> DomainMessage
+//    | Help -> HelpRequested
+//    | ParseFailed  -> NotParsable input
 
 open Microsoft.FSharp.Reflection
 
@@ -47,9 +47,9 @@ let print (state : State, outputToPrint : string) =
 
     state
 
-let rec loop (state : State) =
-    Console.ReadLine()
-    |> read
-    |> evaluate Domain.update state
-    |> print
-    |> loop
+//let rec loop (state : State) =
+//    Console.ReadLine()
+//    |> read
+//    |> evaluate Domain.update state
+//    |> print
+//    |> loop

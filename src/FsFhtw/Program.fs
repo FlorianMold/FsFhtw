@@ -7,15 +7,18 @@ let main argv =
     printfn "Press CTRL+C to stop the program."
     printf "> "
 
-    let mutable cart = (Domain.emptyUnpaidCart ())
-    cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 1
-    cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 2
-    cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 2
+    let ticket =
+        Domain.searchTrips { name = null } { name = "Linz" }
 
-    cart <- Domain.removeTicketFromCart cart {nr = 1} Domain.AdultTicket 2
+    //    let mutable cart = (Domain.emptyUnpaidCart ())
+//    cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 1
+//    cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 2
+//    cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 2
+//
+//    cart <- Domain.removeTicketFromCart cart {nr = 1} Domain.AdultTicket 2
+//
+//    let res = Domain.payCart cart PaymentMethod.PayPal
 
-    let res = Domain.payCart cart PaymentMethod.PayPal
 
-
-//    Repl.loop initialState
+    //    Repl.loop initialState
     0 // return an integer exit code
