@@ -2,23 +2,11 @@
 
 [<EntryPoint>]
 let main argv =
-    printfn "Welcome to the FHTW Domain REPL!"
+    printfn "Welcome to the OEBB REPL!"
     printfn "Please enter your commands to interact with the system."
     printfn "Press CTRL+C to stop the program."
     printf "> "
 
-    let ticket =
-        Domain.searchTrips { name = null } { name = "Linz" }
-
-    //    let mutable cart = (Domain.emptyUnpaidCart ())
-//    cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 1
-//    cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 2
-//    cart <- Domain.addTicketToCart cart {nr = 1} Domain.AdultTicket 2
-//
-//    cart <- Domain.removeTicketFromCart cart {nr = 1} Domain.AdultTicket 2
-//
-//    let res = Domain.payCart cart PaymentMethod.PayPal
-
-
-    //    Repl.loop initialState
+    let initialState = Domain.init ()
+    Repl.loop initialState
     0 // return an integer exit code
