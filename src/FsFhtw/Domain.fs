@@ -31,7 +31,7 @@ type TrainType =
     | Intercity
     | Cityjet
 
-type TicketNumber = { nr: int }
+type TicketNumber = int
 
 type TicketType =
     | SeniorTicket
@@ -79,6 +79,7 @@ type ShoppingCart =
     | UnpaidCart of UnpaidCart
 
 type BounceReason =
+    | NoItemsInCart
     | PaymentProcessorFailed
     | CustomerWentOutOfMoney
     | CustomerCanceled
@@ -117,6 +118,11 @@ type ConvertCart = UnpaidCart -> PaidCart
 type StorePaidCart = Orders -> PaidCart -> Orders
 
 type ShowPaidOrders = Orders -> unit
+
+type CartManipulation =
+    { ticketNr: TicketNumber
+      ticketType: TicketType
+      ticketQuantity: TicketQuantity }
 
 // AREA: Utility
 
@@ -177,7 +183,7 @@ let private createTicketForTrip
     (ticketType: TicketType)
     (departure: DateTime)
     : Ticket =
-    { ticketNr = { nr = ticketNumber }
+    { ticketNr = ticketNumber
       ticketPrice = { price = ticketPrice }
       ticketType = ticketType
       departure = trip.departure
@@ -271,7 +277,7 @@ let private findTicket (ticketNr: TicketNumber) (ticketType: TicketType) (ticket
     tickets
     |> List.filter
         (fun t ->
-            t.ticketNr.nr.Equals ticketNr.nr
+            t.ticketNr.Equals ticketNr
             && t.ticketType.Equals ticketType)
 
 
@@ -344,20 +350,16 @@ let emptyUnpaidCart () : UnpaidCart = { tickets = [] }
 let emptyPaidCart () : PaidCart = { tickets = [] }
 
 /// Find all tickets (includes the type of tickets) for the given departure and arrival.
-let requestTicket (departure: DepartureTrainStation) (arrival: ArrivalTrainStation) : list<Ticket> =
-    filterTrips
-        allTicketMap
-        { departure = departure.name
-          arrival = arrival.name }
+let requestTicket (simpleTrip: SimpleTrip) : list<Ticket> = filterTrips allTicketMap simpleTrip
 
 /// Find all trips for the given departure and arrival.
-let searchTrips (departure: DepartureTrainStation) (arrival: ArrivalTrainStation) : list<Ticket> =
-    let filteredTickets = requestTicket departure arrival
+let searchTrips (simpleTrip: SimpleTrip) : list<Ticket> =
+    let filteredTickets = requestTicket simpleTrip
 
     // Group the elements by ticket id and take the first element of every list,
     // because the ticket is always the same and the only difference is the ticket-type
     filteredTickets
-    |> List.groupBy (fun (ticket: Ticket) -> ticket.ticketNr.nr)
+    |> List.groupBy (fun (ticket: Ticket) -> ticket.ticketNr)
     // function -> https://stackoverflow.com/questions/37508934/difference-between-let-fun-and-function-in-f/37509083
     |> List.choose
         (function
@@ -366,39 +368,33 @@ let searchTrips (departure: DepartureTrainStation) (arrival: ArrivalTrainStation
 
 /// Adds the ticket with the given ticket-number and ticket-type with the quantity to the cart.
 /// If the ticket doesn't exist, the cart stays the same.
-let addTicketToCart
-    (cart: UnpaidCart)
-    (ticketNr: TicketNumber)
-    (ticketType: TicketType)
-    (ticketQuantity: TicketQuantity)
-    : UnpaidCart =
+let addTicketToCart (cart: UnpaidCart) (cartManipulationOp: CartManipulation) : UnpaidCart =
     // Look for the ticket to add in every.
     let ticketToAdd =
-        findTicket ticketNr ticketType allTicketsList
+        findTicket cartManipulationOp.ticketNr cartManipulationOp.ticketType allTicketsList
 
     match ticketToAdd with
-    | [ ticket ] -> addTicketToCart' cart ticket ticketQuantity
+    | [ ticket ] -> addTicketToCart' cart ticket cartManipulationOp.ticketQuantity
     | _ -> cart
 
 /// Removes the ticket with the ticket-number and type with the quantity from the cart.
 /// If the quantity becomes zero, the item is removed from the cart.
 let removeTicketFromCart
     (cart: UnpaidCart)
-    (ticketNr: TicketNumber)
-    (ticketType: TicketType)
-    (ticketQuantity: TicketQuantity)
+    (cartManipulationOp: CartManipulation)
+
     : UnpaidCart =
     let newCart =
-        removeTicketFromShoppingList cart.tickets ticketNr ticketType
+        removeTicketFromShoppingList cart.tickets cartManipulationOp.ticketNr cartManipulationOp.ticketType
 
     let newItem =
         cart.tickets
-        |> List.filter (equalsShoppingCartEntry ticketNr ticketType)
+        |> List.filter (equalsShoppingCartEntry cartManipulationOp.ticketNr cartManipulationOp.ticketType)
         // reduce quantity of found item
         |> List.map
             (fun item ->
                 { ticket = item.ticket
-                  quantity = item.quantity - ticketQuantity })
+                  quantity = item.quantity - cartManipulationOp.ticketQuantity })
         // quantity < 0 is removed
         |> List.filter (fun item -> item.quantity > 0)
 
@@ -410,24 +406,19 @@ let clearCart (cart: UnpaidCart) = emptyUnpaidCart ()
 
 /// Pays the given cart with the payment-method.
 let payCart (cart: UnpaidCart) (paymentMethod: PaymentMethod) : PaymentResult =
-    let paidCart =
-        convertUnpaidCartToPaidCart cart paymentMethod
 
-    Success paidCart
+    if List.isEmpty cart.tickets then
+        Bounce NoItemsInCart
+    else
+        let paidCart =
+            convertUnpaidCartToPaidCart cart paymentMethod
 
-let printSearchTrips (tickets: list<Ticket>) = ""
-let printRequestTicket (tickets: list<Ticket>) = ""
-let printUnpaidCart (cart: UnpaidCart) = ""
-let printPaidCard (cart: PaidCart) = ""
+        Success paidCart
 
-type State = string
+type State = UnpaidCart * list<Ticket> * list<TrainStation> * PaymentResult * list<PaidCart>
 
-let init () : State = ""
-
-type CartManipulation =
-    { ticketNr: TicketNumber
-      ticketType: TicketType
-      ticketQuantity: TicketQuantity }
+let init () : State =
+    (emptyUnpaidCart (), [], allTrainStations, Success { tickets = [] }, [])
 
 type Message =
     | PrintTrainStations
@@ -441,13 +432,24 @@ type Message =
     | ShowPaidOrders
 
 let update (msg: Message) (model: State) : State =
+    let (cart, ticketList, stations, paymentResult, paidOrders) = model
+
     match msg with
-    | PrintTrainStations -> "A"
-    //    | SearchTrips x -> printSearchTrips |> searchTrips x.departure x.arrival
-//    | RequestTicket x -> printRequestTicket requestTicket x.departure x.arrival
-//    | AddTicketToCart x -> printUnpaidCart (addTicketToCart model.unpaidCart x.ticketNr x.ticketType x.ticketQuantity)
-    | PrintCart -> "A"
-    //    | RemoveTicketFromCart x -> printUnpaidCart (removeTicketFromCart model.unpaidCart x.ticketNr x.ticketType x.ticketQuantity)
-//    | ClearCart -> printUnpaidCart (clearCart model.unpaidCart)
-//    | PayCart x -> printPaidCard (payCart model.unpaidCart x)
-    | ShowPaidOrders -> "A"
+    | PrintTrainStations -> (cart, ticketList, allTrainStations, paymentResult, paidOrders)
+    | SearchTrips trip -> (cart, searchTrips trip, stations, paymentResult, paidOrders)
+    | RequestTicket trip -> (cart, requestTicket trip, stations, paymentResult, paidOrders)
+    | AddTicketToCart cmo -> ((addTicketToCart cart cmo), ticketList, stations, paymentResult, paidOrders)
+    | PrintCart -> model
+    | RemoveTicketFromCart cmo -> ((removeTicketFromCart cart cmo), ticketList, stations, paymentResult, paidOrders)
+    | ClearCart -> ((clearCart cart), ticketList, stations, paymentResult, paidOrders)
+    | PayCart x ->
+        let paymentResult = payCart cart x
+
+        // Add the paid-cart to the paid-orders
+        let paidCart =
+            match paymentResult with
+            | Success x -> [ x ]
+            | _ -> []
+
+        (emptyUnpaidCart (), ticketList, stations, paymentResult, List.append paidCart paidOrders)
+    | ShowPaidOrders -> model
