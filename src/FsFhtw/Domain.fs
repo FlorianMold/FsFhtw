@@ -220,8 +220,7 @@ let private generateTickets (trip: Trip) (ticketNumber: int) : list<Ticket> =
         randomNumber maximumTicketAmount minimumTicketAmount
 
     let now = DateTime.Now
-    // TODO: maybe better solution
-    let mutable firstDeparture = setTime (now.Hour + 1) 0 now
+    let nextHour = setTime (now.Hour + 1) 0 now
 
     let ticketTypes =
         [ AdultTicket
@@ -232,7 +231,7 @@ let private generateTickets (trip: Trip) (ticketNumber: int) : list<Ticket> =
     Seq.init
         randomTicketAmount
         (fun idx ->
-            firstDeparture <- setTime (firstDeparture.Hour + 1) 0 now
+            let firstDeparture = setTime (nextHour.Hour + idx) 0 nextHour
             createTicketFromTicketType ticketTypes (ticketNumber + idx) firstDeparture trip)
     |> List.concat
 
