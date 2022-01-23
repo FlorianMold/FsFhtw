@@ -31,9 +31,10 @@ let tryParsePayCartOperation (paymentMethodArg: string) valueConstructor =
     | _ -> ParseFailed
 
 let tryParseSimpleTripsOperation (departureArg: string) (arrivalArg: string) valueConstructor =
+    let toTitleCase = System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase
     valueConstructor
-        { departure = departureArg
-          arrival = arrivalArg }
+        { departure = toTitleCase departureArg
+          arrival = toTitleCase arrivalArg }
 
 type TicketParseResult =
     | SuccessParse of TicketType
