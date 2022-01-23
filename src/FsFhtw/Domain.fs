@@ -134,9 +134,6 @@ let setTime h m (t: DateTime) =
 
 // AREA: PRIVATE API
 
-// TODO: maybe better solution
-let mutable globalTicketCounter = 0
-
 // TODO: temporary lock this value
 let private maximumTicketAmount = 10
 let private minimumTicketAmount = 5
@@ -234,10 +231,9 @@ let private generateTickets (trip: Trip) (ticketNumber: int) : list<Ticket> =
 
     Seq.init
         randomTicketAmount
-        (fun _ ->
-            globalTicketCounter <- globalTicketCounter + 1
+        (fun idx ->
             firstDeparture <- setTime (firstDeparture.Hour + 1) 0 now
-            createTicketFromTicketType ticketTypes globalTicketCounter firstDeparture trip)
+            createTicketFromTicketType ticketTypes (ticketNumber + idx) firstDeparture trip)
     |> List.concat
 
 /// Generates all trips with their tickets for the application.
@@ -252,7 +248,7 @@ let rec private generateAllTrips
             (map.Add(
                 { departure = head.departure.name
                   arrival = head.arrival.name },
-                generateTickets head ticketNumber
+                generateTickets head (ticketNumber * 100)
             ))
             tail
             (ticketNumber + 1)
