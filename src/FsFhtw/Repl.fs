@@ -35,14 +35,63 @@ let createHelpText () : string =
 
 // TODO(Aytac): write the printing
 // TODO(Aytac): Bei Operationen, die das Manipulieren des Carts betrifft werden wir den alten cart mit dem
-// TODO(Aytac):neuen cart vergleichen muesen, damit wir feststellen koennen, dass sich nicht veraendert hat.
+// TODO(Aytac): neuen cart vergleichen muesen, damit wir feststellen koennen, dass sich nicht veraendert hat.
 // TODO(Aytac): e.g.: addTocart mit nicht exister ticket-id...
-let trainStationsToString (trainStation: list<Domain.TrainStation>) = "Train stations"
-let searchTripsToString (tickets: list<Domain.Ticket>) = "Search trips"
-let requestTicketToString (tickets: list<Domain.Ticket>) = "Request tickets"
-let unpaidCartToString (oldCard: Domain.UnpaidCart) (newCart: Domain.UnpaidCart) = "Unpaid Cart"
-let paidCartToString (cart: Domain.PaymentResult) = "paid cart to string"
-let paidOrdersToString (paidCarts: list<PaidCart>) = "paid order"
+
+let trainStationsToString (trainStations: list<Domain.TrainStation>) = 
+    for trainStation in trainStations do printf "%s, " trainStation.name;
+    ""
+
+let searchTripsToString (tickets: list<Domain.Ticket>) = 
+    printfn "| ticket-nr |   from   |   to   |      Departuretime - Arrivaltime      |   trainType   |"
+    printfn "-----------------------------------------------------------------------------------------"
+    for ticket in tickets 
+        do printfn "|    %d    |  %s  |  %s  | %s  -  %s | %O |" 
+            ticket.ticketNr 
+            ticket.departure.name 
+            ticket.arrival.name 
+            (ticket.departureTime.ToString "dd.mm.yyyy hh:mm") 
+            (ticket.arrivalTime.ToString "dd.mm.yyyy hh:mm")  
+            ticket.trainType;
+    "-----------------------------------------------------------------------------------------";
+
+let requestTicketToString (tickets: list<Domain.Ticket>) = 
+    printfn "| ticket-nr |   from   |   to   |      Departuretime - Arrivaltime      |     trainType    |     ticketType    |"
+    printfn "----------------------------------------------------------------------------------------------------------------"
+    for ticket in tickets 
+        do printfn "|    %d    |  %s  |  %s  | %s  -  %s | %O | %O |" 
+            ticket.ticketNr 
+            ticket.departure.name 
+            ticket.arrival.name 
+            (ticket.departureTime.ToString "dd.mm.yyyy hh:mm") 
+            (ticket.arrivalTime.ToString "dd.mm.yyyy hh:mm")  
+            ticket.trainType
+            ticket.ticketType;
+    "----------------------------------------------------------------------------------------------------------------"
+
+let unpaidCartToString (oldCart: Domain.UnpaidCart) (newCart: Domain.UnpaidCart) = 
+   if oldCart.tickets.Length = newCart.tickets.Length 
+    then 
+        "for oldCart"
+    else 
+        printfn "| ticket-nr |   from   |   to   |      Departuretime - Arrivaltime      |    trainType   |    ticketType    | quantity |"
+        printfn "-------------------------------------------------------------------------------------------------------------------------"
+        for ticket in newCart.tickets 
+            do printfn "|    %d    |  %s  |  %s  | %s  -  %s |     %O    |   %O   |     %d    |" 
+                ticket.ticket.ticketNr
+                ticket.ticket.departure.name 
+                ticket.ticket.arrival.name 
+                (ticket.ticket.departureTime.ToString "dd.mm.yyyy hh:mm") 
+                (ticket.ticket.arrivalTime.ToString "dd.mm.yyyy hh:mm")  
+                ticket.ticket.trainType
+                ticket.ticket.ticketType
+                ticket.quantity;
+        "-------------------------------------------------------------------------------------------------------------------------";
+
+let paidCartToString (cart: Domain.PaymentResult) = 
+    "paid cart to string"
+let paidOrdersToString (paidCarts: list<PaidCart>) = 
+    ""
 
 let evaluate (update: Domain.Message -> State -> State) (state: State) (msg: Message) =
     let (oldCart, _, _, _, _) = state
