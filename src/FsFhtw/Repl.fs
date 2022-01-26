@@ -36,73 +36,74 @@ let createHelpText () : string =
 let dateFormat = "dd.MM.yyyy hh:mm"
 
 let trainStationsToString (trainStations: list<Domain.TrainStation>) =
-    printfn "--------------------------------------------"
+    printfn "------------------------------"
 
     for trainStation in trainStations do
-        printfn "%s " trainStation.name
+        printfn "     %s " trainStation.name
 
-    printfn "--------------------------------------------"
+    printfn "------------------------------"
 
 let searchTripsToString (tickets: list<Domain.Ticket>) =
-    printfn "| Ticket-nr |   From   |   To   |      Departuretime - Arrivaltime      |   Train Type   |"
-    printfn "-----------------------------------------------------------------------------------------"
+    printfn "| Ticket-nr |    From     |     To      |   Price   |      Departuretime - Arrivaltime      |    Train Type   |"
+    printfn "---------------------------------------------------------------------------------------------------------------"
 
     for ticket in tickets do
         printfn
-            "|    %d    |  %s  |  %s  | %s  -  %s | %O |"
-            ticket.ticketNr
-            ticket.departure.name
-            ticket.arrival.name
-            (ticket.departureTime.ToString dateFormat)
-            (ticket.arrivalTime.ToString dateFormat)
-            ticket.trainType
+            "|%s|%s|%s|%s|%s - %s|%s|"
+            (ticket.ticketNr.ToString().PadLeft(7).PadRight(11))
+            (ticket.departure.name.PadLeft(11).PadRight(13))
+            (ticket.arrival.name.PadLeft(11).PadRight(13))
+            ((sprintf "%.2f $" ticket.ticketPrice).PadLeft(9).PadRight(11))
+            ((ticket.departureTime.ToString dateFormat).PadLeft(18))
+            ((ticket.arrivalTime.ToString dateFormat).PadRight(18))
+            ((sprintf "%O" ticket.trainType).PadLeft(11).PadRight(17))
 
-    printfn "-----------------------------------------------------------------------------------------"
+    printfn "---------------------------------------------------------------------------------------------------------------"
+
 
 let requestTicketToString (tickets: list<Domain.Ticket>) =
-    printfn
-        "| Ticket-nr |   From   |   To   |      Departuretime - Arrivaltime      |     Train Type    |     Ticket Type    |"
+    printfn "| Ticket-nr |    From     |     To      |   Price   |      Departuretime - Arrivaltime      |    Train Type   |   Ticket Type   |"
 
     printfn
-        "----------------------------------------------------------------------------------------------------------------"
+        "-------------------------------------------------------------------------------------------------------------------------------------"
 
     for ticket in tickets do
         printfn
-            "|    %d    |  %s  |  %s  | %s  -  %s | %O | %O |"
-            ticket.ticketNr
-            ticket.departure.name
-            ticket.arrival.name
-            (ticket.departureTime.ToString dateFormat)
-            (ticket.arrivalTime.ToString dateFormat)
-            ticket.trainType
-            ticket.ticketType
+            "|%s|%s|%s|%s|%s - %s|%s|%s|"
+            (ticket.ticketNr.ToString().PadLeft(7).PadRight(11))
+            (ticket.departure.name.PadLeft(11).PadRight(13))
+            (ticket.arrival.name.PadLeft(11).PadRight(13))
+            ((sprintf "%.2f $" ticket.ticketPrice).PadLeft(9).PadRight(11))
+            ((ticket.departureTime.ToString dateFormat).PadLeft(18))
+            ((ticket.arrivalTime.ToString dateFormat).PadRight(18))
+            ((sprintf "%O" ticket.trainType).PadLeft(11).PadRight(17))
+            ((sprintf "%O" ticket.ticketType).PadRight(15).PadLeft(17))
 
     printfn
-        "----------------------------------------------------------------------------------------------------------------"
+        "-------------------------------------------------------------------------------------------------------------------------------------"
 
 let ticketOutput (shoppingCartEntry: list<ShoppingCartEntry>) =
     printfn "Cart: "
+    
+    printfn "| Ticket-nr |    From     |     To      |   Price   |      Departuretime - Arrivaltime      |    Train Type   |   Ticket Type   | Quantity |"
 
-    printfn
-        "| Ticket-nr |   From   |   To   |      Departuretime - Arrivaltime      |    Train Type   |    Ticket Type    | Quantity |"
-
-    printfn
-        "-------------------------------------------------------------------------------------------------------------------------"
+    printfn "--------------------------------------------------------------------------------------------------------------------------------------------"
 
     for ticket in shoppingCartEntry do
         printfn
-            "|    %d    |  %s  |  %s  | %s  -  %s |     %O    |   %O   |     %d    |"
-            ticket.ticket.ticketNr
-            ticket.ticket.departure.name
-            ticket.ticket.arrival.name
-            (ticket.ticket.departureTime.ToString dateFormat)
-            (ticket.ticket.arrivalTime.ToString dateFormat)
-            ticket.ticket.trainType
-            ticket.ticket.ticketType
-            ticket.quantity
+            "|%s|%s|%s|%s|%s - %s|%s|%s|%s|"
+            (ticket.ticket.ticketNr.ToString().PadLeft(7).PadRight(11))
+            (ticket.ticket.departure.name.PadLeft(11).PadRight(13))
+            (ticket.ticket.arrival.name.PadLeft(11).PadRight(13))
+            ((sprintf "%.2f $" ticket.ticket.ticketPrice).PadLeft(9).PadRight(11))
+            ((ticket.ticket.departureTime.ToString dateFormat).PadLeft(18))
+            ((ticket.ticket.arrivalTime.ToString dateFormat).PadRight(18))
+            ((sprintf "%O" ticket.ticket.trainType).PadLeft(11).PadRight(17))
+            ((sprintf "%O" ticket.ticket.ticketType).PadRight(15).PadLeft(17))
+            (ticket.quantity.ToString().PadLeft(5).PadRight(10))
 
     printfn
-        "-------------------------------------------------------------------------------------------------------------------------"
+        "--------------------------------------------------------------------------------------------------------------------------------------------"
 
 let unpaidCartToString (newCart: Domain.UnpaidCart) =
     match newCart.tickets with
@@ -112,48 +113,44 @@ let unpaidCartToString (newCart: Domain.UnpaidCart) =
 let loopPaidCart paidCart =
     for ticket in paidCart.tickets do
         printfn
-            "|    %d    |  %s  |  %s  | %s  -  %s |     %O    |   %O   |     %d    |     %s    |     %O    |"
-            ticket.ticket.ticketNr
-            ticket.ticket.departure.name
-            ticket.ticket.arrival.name
-            (ticket.ticket.departureTime.ToString dateFormat)
-            (ticket.ticket.arrivalTime.ToString dateFormat)
-            ticket.ticket.trainType
-            ticket.ticket.ticketType
-            ticket.quantity
-            (ticket.orderDate.ToString dateFormat)
-            ticket.paymentMethod
+             "|%s|%s|%s|%s|%s - %s|%s|%s|%s|%s|%s|"
+            (ticket.ticket.ticketNr.ToString().PadLeft(7).PadRight(11))
+            (ticket.ticket.departure.name.PadLeft(11).PadRight(13))
+            (ticket.ticket.arrival.name.PadLeft(11).PadRight(13))
+            ((sprintf "%.2f $" ticket.ticket.ticketPrice).PadLeft(9).PadRight(11))
+            ((ticket.ticket.departureTime.ToString dateFormat).PadLeft(18))
+            ((ticket.ticket.arrivalTime.ToString dateFormat).PadRight(18))
+            ((sprintf "%O" ticket.ticket.trainType).PadLeft(11).PadRight(17))
+            ((sprintf "%O" ticket.ticket.ticketType).PadRight(15).PadLeft(17))
+            (ticket.quantity.ToString().PadLeft(5).PadRight(10))
+            ((ticket.orderDate.ToString dateFormat).PadLeft(18).PadRight(20))
+            ((sprintf "%O" ticket.paymentMethod).PadRight(12).PadLeft(18))
 
 let paidCartToString (paymentResult: Domain.PaymentResult) =
     printfn "Your Invoice:"
     match paymentResult with
     | Success x ->
-        printfn
-            "| Ticket-nr |   From   |   To   |      Departuretime - Arrivaltime      |    Train Type   |    Ticket Type    | Quantity | Order Date | Payment Method |"
+        printfn "| Ticket-nr |    From     |     To      |   Price   |      Departuretime - Arrivaltime      |    Train Type   |   Ticket Type   | Quantity |     Order Date     |  Payment Method  |"
 
-        printfn
-            "--------------------------------------------------------------------------------------------------------------------------------------------------------"
+        printfn "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
 
         loopPaidCart x
 
-        printfn
-            "--------------------------------------------------------------------------------------------------------------------------------------------------------"
-        printfn $"Total: %.2f{computeTotalCart x}$"
+        printfn "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+
+        printfn $"Total: %.2f{computeTotalCart x} $"
 
     | Bounce x -> printfn "%O" x
 
 let paidOrdersToString (paidCarts: list<PaidCart>) =
-    printfn
-        "| Ticket-nr |   From   |   To   |      Departuretime - Arrivaltime      |    Train Type   |    Ticket Type    | Quantity | Order Date | Payment Method |"
-
-    printfn
-        "--------------------------------------------------------------------------------------------------------------------------------------------------------"
+    printfn "| Ticket-nr |    From     |     To      |   Price   |      Departuretime - Arrivaltime      |    Train Type   |   Ticket Type   | Quantity |     Order Date     |  Payment Method  |"
+    
+    printfn "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
 
     for paidCart in paidCarts do
         loopPaidCart paidCart
 
-    printfn
-        "--------------------------------------------------------------------------------------------------------------------------------------------------------"
+    printfn "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
 
 
 let evaluate (update: Domain.Message -> State -> State) (state: State) (msg: Message) =
