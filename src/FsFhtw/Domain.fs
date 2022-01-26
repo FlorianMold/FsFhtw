@@ -10,7 +10,7 @@ type DepartureTrainStation = TrainStation
 type ArrivalTrainStation = TrainStation
 
 
-type Price = { price: float }
+type Price = float
 type TicketPrice = Price
 type TripPrice = Price
 
@@ -106,7 +106,6 @@ type State = UnpaidCart * list<Ticket> * list<TrainStation> * PaymentResult * li
 
 // AREA: Utility
 
-// TODO: Take the next day if hour > 24
 let setTime h m (t: DateTime) =
     match h with
     | h when h > 23 -> DateTime(t.Year, t.Month, t.Day + 1, h % 24, m, 0)
@@ -143,7 +142,7 @@ let rec private generateTrips (stations: list<TrainStation>) : list<Trip> =
     | x :: y :: xs ->
         { departure = { name = x.name }
           arrival = { name = y.name }
-          basePrice = { price = randomNumber maximumTicketPrice minimumTicketPrice } }
+          basePrice = randomNumber maximumTicketPrice minimumTicketPrice }
         :: generateTrips xs
     | _ -> []
 
@@ -160,7 +159,7 @@ let private createTicketForTrip
     (departure: DateTime)
     : Ticket =
     { ticketNr = ticketNumber
-      ticketPrice = { price = ticketPrice }
+      ticketPrice = ticketPrice
       ticketType = ticketType
       departure = trip.departure
       arrival = trip.arrival
@@ -187,7 +186,7 @@ let rec private createTicketFromTicketType
     | t :: types ->
         // Calculate price of ticket
         let ticketPriceByTicketType =
-            adaptPriceToTicketType t trip.basePrice.price
+            adaptPriceToTicketType t trip.basePrice
 
         createTicketForTrip trip ticketNumber ticketPriceByTicketType t departure
         :: createTicketFromTicketType types ticketNumber departure trip
@@ -403,6 +402,9 @@ let compareCarts (firstCart: UnpaidCart) (secondCart: UnpaidCart) =
     else
         compareShoppingCartLists firstCart.tickets secondCart.tickets
 
+/// Computes the total price of the price
+let computeTotalCart (cart: PaidCart) =
+    cart.tickets |> List.map (fun x -> ((float) x.ticket.ticketPrice) * (float) x.quantity) |> List.fold (+) 0.
 
 type TicketShopApi =
     { requestTicket: RequestTicket

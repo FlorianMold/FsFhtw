@@ -138,6 +138,7 @@ let paidCartToString (paymentResult: Domain.PaymentResult) =
 
         printfn
             "--------------------------------------------------------------------------------------------------------------------------------------------------------"
+        printfn $"Total: %.2f{computeTotalCart x}$"
 
     | Bounce x -> printfn "%O" x
 
