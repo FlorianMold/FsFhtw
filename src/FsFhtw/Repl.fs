@@ -38,60 +38,98 @@ let createHelpText () : string =
 // TODO(Aytac): neuen cart vergleichen muesen, damit wir feststellen koennen, dass sich nicht veraendert hat.
 // TODO(Aytac): e.g.: addTocart mit nicht exister ticket-id...
 
+let dateFormat = "dd.MM.yyyy hh:mm"
+
 let trainStationsToString (trainStations: list<Domain.TrainStation>) = 
-    for trainStation in trainStations do printf "%s, " trainStation.name;
-    ""
+    printfn "--------------------------------------------"
+    for trainStation in trainStations 
+        do printfn "%s " trainStation.name;
+    printfn "--------------------------------------------"
 
 let searchTripsToString (tickets: list<Domain.Ticket>) = 
-    printfn "| ticket-nr |   from   |   to   |      Departuretime - Arrivaltime      |   trainType   |"
+    printfn "| Ticket-nr |   From   |   To   |      Departuretime - Arrivaltime      |   Train Type   |"
     printfn "-----------------------------------------------------------------------------------------"
     for ticket in tickets 
         do printfn "|    %d    |  %s  |  %s  | %s  -  %s | %O |" 
             ticket.ticketNr 
             ticket.departure.name 
             ticket.arrival.name 
-            (ticket.departureTime.ToString "dd.mm.yyyy hh:mm") 
-            (ticket.arrivalTime.ToString "dd.mm.yyyy hh:mm")  
+            (ticket.departureTime.ToString dateFormat) 
+            (ticket.arrivalTime.ToString dateFormat)  
             ticket.trainType;
-    "-----------------------------------------------------------------------------------------";
+    printfn "-----------------------------------------------------------------------------------------";
 
 let requestTicketToString (tickets: list<Domain.Ticket>) = 
-    printfn "| ticket-nr |   from   |   to   |      Departuretime - Arrivaltime      |     trainType    |     ticketType    |"
+    printfn "| Ticket-nr |   From   |   To   |      Departuretime - Arrivaltime      |     Train Type    |     Ticket Type    |"
     printfn "----------------------------------------------------------------------------------------------------------------"
     for ticket in tickets 
         do printfn "|    %d    |  %s  |  %s  | %s  -  %s | %O | %O |" 
             ticket.ticketNr 
             ticket.departure.name 
             ticket.arrival.name 
-            (ticket.departureTime.ToString "dd.mm.yyyy hh:mm") 
-            (ticket.arrivalTime.ToString "dd.mm.yyyy hh:mm")  
+            (ticket.departureTime.ToString dateFormat) 
+            (ticket.arrivalTime.ToString dateFormat)  
             ticket.trainType
             ticket.ticketType;
-    "----------------------------------------------------------------------------------------------------------------"
+    printfn "----------------------------------------------------------------------------------------------------------------"
+
+let ticketOutput (shoppingCartEntry: list<ShoppingCartEntry>) = 
+    printfn "Cart: "
+    printfn "| Ticket-nr |   From   |   To   |      Departuretime - Arrivaltime      |    Train Type   |    Ticket Type    | Quantity |"
+    printfn "-------------------------------------------------------------------------------------------------------------------------"
+    for ticket in shoppingCartEntry 
+        do printfn "|    %d    |  %s  |  %s  | %s  -  %s |     %O    |   %O   |     %d    |" 
+            ticket.ticket.ticketNr
+            ticket.ticket.departure.name 
+            ticket.ticket.arrival.name 
+            (ticket.ticket.departureTime.ToString dateFormat) 
+            (ticket.ticket.arrivalTime.ToString dateFormat)  
+            ticket.ticket.trainType
+            ticket.ticket.ticketType
+            ticket.quantity;
+    printfn "-------------------------------------------------------------------------------------------------------------------------";
 
 let unpaidCartToString (oldCart: Domain.UnpaidCart) (newCart: Domain.UnpaidCart) = 
    if oldCart.tickets.Length = newCart.tickets.Length 
     then 
-        "for oldCart"
-    else 
-        printfn "| ticket-nr |   from   |   to   |      Departuretime - Arrivaltime      |    trainType   |    ticketType    | quantity |"
-        printfn "-------------------------------------------------------------------------------------------------------------------------"
-        for ticket in newCart.tickets 
-            do printfn "|    %d    |  %s  |  %s  | %s  -  %s |     %O    |   %O   |     %d    |" 
+        printfn "Es gab keine Änderungen"
+        ticketOutput oldCart.tickets
+    else
+        ticketOutput newCart.tickets
+
+let loopPaidCart paidCart = 
+    for ticket in paidCart.tickets 
+            do printfn "|    %d    |  %s  |  %s  | %s  -  %s |     %O    |   %O   |     %d    |     %s    |     %O    |" 
                 ticket.ticket.ticketNr
                 ticket.ticket.departure.name 
                 ticket.ticket.arrival.name 
-                (ticket.ticket.departureTime.ToString "dd.mm.yyyy hh:mm") 
-                (ticket.ticket.arrivalTime.ToString "dd.mm.yyyy hh:mm")  
+                (ticket.ticket.departureTime.ToString dateFormat) 
+                (ticket.ticket.arrivalTime.ToString dateFormat)  
                 ticket.ticket.trainType
                 ticket.ticket.ticketType
-                ticket.quantity;
-        "-------------------------------------------------------------------------------------------------------------------------";
+                ticket.quantity
+                (ticket.orderDate.ToString dateFormat)
+                ticket.paymentMethod;
 
-let paidCartToString (cart: Domain.PaymentResult) = 
-    "paid cart to string"
+let paidCartToString (paymentResult: Domain.PaymentResult) = 
+    
+    match paymentResult with
+        | Success x ->  
+            printfn "| Ticket-nr |   From   |   To   |      Departuretime - Arrivaltime      |    Train Type   |    Ticket Type    | Quantity | Order Date | Payment Method |"
+            printfn "--------------------------------------------------------------------------------------------------------------------------------------------------------"
+            loopPaidCart x
+            printfn "--------------------------------------------------------------------------------------------------------------------------------------------------------"
+
+        | Bounce x -> printfn "%O" x
+
 let paidOrdersToString (paidCarts: list<PaidCart>) = 
-    ""
+    printfn "| Ticket-nr |   From   |   To   |      Departuretime - Arrivaltime      |    Train Type   |    Ticket Type    | Quantity | Order Date | Payment Method |"
+    printfn "--------------------------------------------------------------------------------------------------------------------------------------------------------"
+    
+    for paidCart in paidCarts 
+        do loopPaidCart paidCart
+    printfn "--------------------------------------------------------------------------------------------------------------------------------------------------------"
+
 
 let evaluate (update: Domain.Message -> State -> State) (state: State) (msg: Message) =
     let (oldCart, _, _, _, _) = state
@@ -113,23 +151,21 @@ let evaluate (update: Domain.Message -> State -> State) (state: State) (msg: Mes
             | Domain.PayCart _ -> paidCartToString paymentResult
             | Domain.ShowPaidOrders -> paidOrdersToString paidOrders
 
-        (newState, message)
+        (newState)
     | HelpRequested ->
-        let message = createHelpText ()
-        (state, message)
+        printfn "%s" (createHelpText ())
+
+        (state)
     | NotParsable originalInput ->
-        let message =
-            sprintf
-                """"%s" was not parsable. %s"""
-                originalInput
-                "You can get information about known commands by typing \"Help\""
+        printfn """"%s" was not parsable. %s"""
+            originalInput
+            "You can get information about known commands by typing \"Help\""
 
-        (state, message)
+        (state)
 
-let print (state: State, outputToPrint: string) =
-    printfn "%s\n" outputToPrint
+let print (state: State) =
     printf "> "
-
+    
     state
 
 let rec loop (state: State) =
