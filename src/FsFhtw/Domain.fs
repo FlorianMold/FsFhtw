@@ -3,10 +3,7 @@ module Domain
 open System
 
 // AREA :Types
-
-type AustrianMainTrainStation = { name: string }
-
-type TrainStation = AustrianMainTrainStation
+type TrainStation = { name: string }
 
 type DepartureTrainStation = TrainStation
 
@@ -67,12 +64,14 @@ type PaidCartEntry =
       quantity: TicketQuantity
       orderDate: DateTime
       paymentMethod: PaymentMethod }
-
-type EmptyCart = UnpaidCart
-
 type UnpaidCart = { tickets: list<ShoppingCartEntry> }
 
 type PaidCart = { tickets: list<PaidCartEntry> }
+
+type CartManipulation =
+    { ticketNr: TicketNumber
+      ticketType: TicketType
+      ticketQuantity: TicketQuantity }
 
 type ShoppingCart =
     | PaidCart of PaidCart
@@ -88,41 +87,21 @@ type PaymentResult =
     | Success of PaidCart
     | Bounce of BounceReason
 
-type Orders = list<PaidCart>
-
 // Function types
 
-type PrintStations = list<TrainStation> -> unit
+type SearchTrips = SimpleTrip -> list<Ticket>
 
-type SearchTrips = ArrivalTrainStation -> DepartureTrainStation -> list<Ticket>
-type PrintSearchTrips = list<Ticket> -> unit
+type RequestTicket = SimpleTrip -> list<Ticket>
 
-type GetTrainStations = list<TrainStation>
+type AddTicketToCart = UnpaidCart -> CartManipulation -> UnpaidCart
 
-type RequestTicket = TicketNumber -> list<Ticket>
-type PrintRequestTicket = list<Ticket> -> unit
+type RemoveTicketFromCart = UnpaidCart -> CartManipulation -> UnpaidCart
 
-type AddTicketToCart = UnpaidCart -> TicketNumber -> TicketQuantity -> TicketType -> UnpaidCart
-type PrintAddTicketToCart = UnpaidCart -> Ticket -> unit
-
-type PrintCart = UnpaidCart -> unit
-
-type RemoveFromCart = UnpaidCart -> TicketNumber -> TicketType -> TicketQuantity -> UnpaidCart
-
-type ClearCart = UnpaidCart -> EmptyCart
+type ClearCart = UnpaidCart -> UnpaidCart
 
 type PayCart = UnpaidCart -> PaymentMethod -> PaymentResult
 
-type ConvertCart = UnpaidCart -> PaidCart
-
-type StorePaidCart = Orders -> PaidCart -> Orders
-
-type ShowPaidOrders = Orders -> unit
-
-type CartManipulation =
-    { ticketNr: TicketNumber
-      ticketType: TicketType
-      ticketQuantity: TicketQuantity }
+type State = UnpaidCart * list<Ticket> * list<TrainStation> * PaymentResult * list<PaidCart>
 
 // AREA: Utility
 
@@ -134,7 +113,6 @@ let setTime h m (t: DateTime) =
 
 // AREA: PRIVATE API
 
-// TODO: temporary lock this value
 let private maximumTicketAmount = 10
 let private minimumTicketAmount = 5
 
@@ -341,14 +319,13 @@ let private convertUnpaidCartToPaidCart (unpaidCart: UnpaidCart) (paymentMethod:
 // AREA: PUBLIC API
 
 // Creates an empty cart
-let emptyUnpaidCart () : UnpaidCart = { tickets = [] }
-let emptyPaidCart () : PaidCart = { tickets = [] }
+let private emptyUnpaidCart () : UnpaidCart = { tickets = [] }
 
 /// Find all tickets (includes the type of tickets) for the given departure and arrival.
-let requestTicket (simpleTrip: SimpleTrip) : list<Ticket> = filterTrips allTicketMap simpleTrip
+let private requestTicket (simpleTrip: SimpleTrip) : list<Ticket> = filterTrips allTicketMap simpleTrip
 
 /// Find all trips for the given departure and arrival.
-let searchTrips (simpleTrip: SimpleTrip) : list<Ticket> =
+let private searchTrips (simpleTrip: SimpleTrip) : list<Ticket> =
     let filteredTickets = requestTicket simpleTrip
 
     // Group the elements by ticket id and take the first element of every list,
@@ -363,7 +340,7 @@ let searchTrips (simpleTrip: SimpleTrip) : list<Ticket> =
 
 /// Adds the ticket with the given ticket-number and ticket-type with the quantity to the cart.
 /// If the ticket doesn't exist, the cart stays the same.
-let addTicketToCart (cart: UnpaidCart) (cartManipulationOp: CartManipulation) : UnpaidCart =
+let private addTicketToCart (cart: UnpaidCart) (cartManipulationOp: CartManipulation) : UnpaidCart =
     // Look for the ticket to add in every.
     let ticketToAdd =
         findTicket cartManipulationOp.ticketNr cartManipulationOp.ticketType allTicketsList
@@ -374,7 +351,7 @@ let addTicketToCart (cart: UnpaidCart) (cartManipulationOp: CartManipulation) : 
 
 /// Removes the ticket with the ticket-number and type with the quantity from the cart.
 /// If the quantity becomes zero, the item is removed from the cart.
-let removeTicketFromCart
+let private removeTicketFromCart
     (cart: UnpaidCart)
     (cartManipulationOp: CartManipulation)
 
@@ -397,10 +374,10 @@ let removeTicketFromCart
     { tickets = List.append newItem newCart }
 
 /// Returns a new empty cart.
-let clearCart (cart: UnpaidCart) = emptyUnpaidCart ()
+let private clearCart (cart: UnpaidCart) = emptyUnpaidCart ()
 
 /// Pays the given cart with the payment-method.
-let payCart (cart: UnpaidCart) (paymentMethod: PaymentMethod) : PaymentResult =
+let private payCart (cart: UnpaidCart) (paymentMethod: PaymentMethod) : PaymentResult =
 
     if List.isEmpty cart.tickets then
         Bounce NoItemsInCart
@@ -410,7 +387,21 @@ let payCart (cart: UnpaidCart) (paymentMethod: PaymentMethod) : PaymentResult =
 
         Success paidCart
 
-type State = UnpaidCart * list<Ticket> * list<TrainStation> * PaymentResult * list<PaidCart>
+type TicketShopApi =
+    { requestTicket: RequestTicket
+      searchTrips: SearchTrips
+      addTicketToCart: AddTicketToCart
+      removeTicketFromCart: RemoveTicketFromCart
+      clearCart: ClearCart
+      payCart: PayCart }
+
+let ticketShopApi: TicketShopApi =
+    { requestTicket = requestTicket
+      searchTrips = searchTrips
+      addTicketToCart = addTicketToCart
+      removeTicketFromCart = removeTicketFromCart
+      clearCart = clearCart
+      payCart = payCart }
 
 let init () : State =
     (emptyUnpaidCart (), [], allTrainStations, Success { tickets = [] }, [])
