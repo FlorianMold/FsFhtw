@@ -64,6 +64,7 @@ type PaidCartEntry =
       quantity: TicketQuantity
       orderDate: DateTime
       paymentMethod: PaymentMethod }
+
 type UnpaidCart = { tickets: list<ShoppingCartEntry> }
 
 type PaidCart = { tickets: list<PaidCartEntry> }
@@ -386,6 +387,22 @@ let private payCart (cart: UnpaidCart) (paymentMethod: PaymentMethod) : PaymentR
             convertUnpaidCartToPaidCart cart paymentMethod
 
         Success paidCart
+
+let rec private compareShoppingCartLists (first: list<ShoppingCartEntry>) (second: list<ShoppingCartEntry>) =
+    match first, second with
+    | [], [] -> true
+    | x :: xs, y :: ys ->
+        x.quantity = y.quantity
+        && compareShoppingCartLists xs ys
+    | _ -> false
+
+/// Compares two shopping-carts
+let compareCarts (firstCart: UnpaidCart) (secondCart: UnpaidCart) =
+    if firstCart.tickets.Length <> secondCart.tickets.Length then
+        false
+    else
+        compareShoppingCartLists firstCart.tickets secondCart.tickets
+
 
 type TicketShopApi =
     { requestTicket: RequestTicket
