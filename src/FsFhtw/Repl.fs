@@ -35,7 +35,7 @@ let createHelpText () : string =
 
 let dateFormat = "dd.MM.yyyy hh:mm"
 
-let trainStationsToString (trainStations: list<Domain.TrainStation>) =
+let printTrainStations (trainStations: list<Domain.TrainStation>) =
     printfn "------------------------------"
 
     for trainStation in trainStations do
@@ -43,7 +43,7 @@ let trainStationsToString (trainStations: list<Domain.TrainStation>) =
 
     printfn "------------------------------"
 
-let searchTripsToString (tickets: list<Domain.Ticket>) =
+let printSearchTrips (tickets: list<Domain.Ticket>) =
     printfn "| Ticket-nr |    From     |     To      |   Price   |      Departuretime - Arrivaltime      |    Train Type   |"
     printfn "---------------------------------------------------------------------------------------------------------------"
 
@@ -61,7 +61,7 @@ let searchTripsToString (tickets: list<Domain.Ticket>) =
     printfn "---------------------------------------------------------------------------------------------------------------"
 
 
-let requestTicketToString (tickets: list<Domain.Ticket>) =
+let printRequestTicket (tickets: list<Domain.Ticket>) =
     printfn "| Ticket-nr |    From     |     To      |   Price   |      Departuretime - Arrivaltime      |    Train Type   |   Ticket Type   |"
 
     printfn
@@ -82,9 +82,9 @@ let requestTicketToString (tickets: list<Domain.Ticket>) =
     printfn
         "-------------------------------------------------------------------------------------------------------------------------------------"
 
-let ticketOutput (shoppingCartEntry: list<ShoppingCartEntry>) =
+let printTickets (shoppingCartEntry: list<ShoppingCartEntry>) =
     printfn "Cart: "
-    
+
     printfn "| Ticket-nr |    From     |     To      |   Price   |      Departuretime - Arrivaltime      |    Train Type   |   Ticket Type   | Quantity |"
 
     printfn "--------------------------------------------------------------------------------------------------------------------------------------------"
@@ -104,13 +104,14 @@ let ticketOutput (shoppingCartEntry: list<ShoppingCartEntry>) =
 
     printfn
         "--------------------------------------------------------------------------------------------------------------------------------------------"
+    printfn $"Total: %.2f{computeTotalUnpaidCart {tickets = shoppingCartEntry}} $"
 
-let unpaidCartToString (newCart: Domain.UnpaidCart) =
+let printUnpaidCart (newCart: Domain.UnpaidCart) =
     match newCart.tickets with
     | [] -> printfn "Cart is empty!"
-    | _ -> ticketOutput newCart.tickets
+    | _ -> printTickets newCart.tickets
 
-let loopPaidCart paidCart =
+let printPaidCartItems paidCart =
     for ticket in paidCart.tickets do
         printfn
              "|%s|%s|%s|%s|%s - %s|%s|%s|%s|%s|%s|"
@@ -126,7 +127,7 @@ let loopPaidCart paidCart =
             ((ticket.orderDate.ToString dateFormat).PadLeft(18).PadRight(20))
             ((sprintf "%O" ticket.paymentMethod).PadRight(12).PadLeft(18))
 
-let paidCartToString (paymentResult: Domain.PaymentResult) =
+let printPaidCart (paymentResult: Domain.PaymentResult) =
     printfn "Your Invoice:"
     match paymentResult with
     | Success x ->
@@ -134,24 +135,26 @@ let paidCartToString (paymentResult: Domain.PaymentResult) =
 
         printfn "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
 
-        loopPaidCart x
+        printPaidCartItems x
 
         printfn "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
 
-        printfn $"Total: %.2f{computeTotalCart x} $"
+        printfn $"Total: %.2f{computeTotalPaidCart x} $"
 
     | Bounce x -> printfn "%O" x
 
-let paidOrdersToString (paidCarts: list<PaidCart>) =
-    printfn "| Ticket-nr |    From     |     To      |   Price   |      Departuretime - Arrivaltime      |    Train Type   |   Ticket Type   | Quantity |     Order Date     |  Payment Method  |"
-    
-    printfn "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+let printPaidOrders (paidCarts: list<PaidCart>) =
 
     for paidCart in paidCarts do
-        loopPaidCart paidCart
+        printfn "| Ticket-nr |    From     |     To      |   Price   |      Departuretime - Arrivaltime      |    Train Type   |   Ticket Type   | Quantity |     Order Date     |  Payment Method  |"
+        printfn "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+        printPaidCartItems paidCart
+        printfn $"Total: %.2f{computeTotalPaidCart paidCart} $"
+        printfn "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
 
-    printfn "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
-
+let printAvailableTrips (trips: list<Trip>) =
+    printfn "No trips found. Available trips are:"
+    trips |> List.iter (fun item -> printfn $"%s{item.arrival.name} - %s{item.departure.name}" )
 
 let evaluate (update: Domain.Message -> State -> State) (state: State) (msg: Message) =
     let (oldCart, _, _, _, _) = state
@@ -165,20 +168,20 @@ let evaluate (update: Domain.Message -> State -> State) (state: State) (msg: Mes
             if compareCarts oldCart cart then
                 printfn $"%s{message}"
             else
-                unpaidCartToString cart
+                printUnpaidCart cart
 
         let message =
             match msg with
-            | Domain.PrintTrainStations -> trainStationsToString stations
-            | Domain.SearchTrips _ when not ticketList.IsEmpty -> searchTripsToString ticketList
-            | Domain.RequestTicket _ when not ticketList.IsEmpty -> requestTicketToString ticketList
+            | Domain.PrintTrainStations -> printTrainStations stations
+            | Domain.SearchTrips _ when not ticketList.IsEmpty -> printSearchTrips ticketList
+            | Domain.RequestTicket _ when not ticketList.IsEmpty -> printRequestTicket ticketList
             | Domain.AddTicketToCart _ -> printMessageIfCartHasNotChanged "Nothing was added to the cart!"
-            | Domain.PrintCart -> unpaidCartToString cart
+            | Domain.PrintCart -> printUnpaidCart cart
             | Domain.RemoveTicketFromCart _ -> printMessageIfCartHasNotChanged "Nothing was removed to the cart!"
-            | Domain.ClearCart -> unpaidCartToString cart
-            | Domain.PayCart _ -> paidCartToString paymentResult
-            | Domain.ShowPaidOrders when not paidOrders.IsEmpty -> paidOrdersToString paidOrders
-            | _ -> printfn "Nothing found!"
+            | Domain.ClearCart -> printUnpaidCart cart
+            | Domain.PayCart _ -> printPaidCart paymentResult
+            | Domain.ShowPaidOrders -> if paidOrders.IsEmpty then printfn "No paid orders!" else printPaidOrders paidOrders
+            | _ -> printAvailableTrips Domain.getAllTrips
 
         (newState)
     | HelpRequested ->

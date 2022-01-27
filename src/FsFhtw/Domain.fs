@@ -57,7 +57,9 @@ type Ticket =
       departureTime: DepartureTime
       arrivalTime: ArrivalTime }
 
-type ShoppingCartEntry = { ticket: Ticket; quantity: int }
+type ShoppingCartEntry =
+    { ticket: Ticket
+      quantity: TicketQuantity }
 
 type PaidCartEntry =
     { ticket: Ticket
@@ -104,6 +106,10 @@ type PayCart = UnpaidCart -> PaymentMethod -> PaymentResult
 
 type State = UnpaidCart * list<Ticket> * list<TrainStation> * PaymentResult * list<PaidCart>
 
+type SimpleTicket =
+    { price: TicketPrice
+      quantity: TicketQuantity }
+
 // AREA: Utility
 
 let setTime h m (t: DateTime) =
@@ -147,7 +153,7 @@ let rec private generateTrips (stations: list<TrainStation>) : list<Trip> =
     | _ -> []
 
 /// Returns a list of all possible trips.
-let private getAllTrips: list<Trip> =
+let getAllTrips: list<Trip> =
     List.append (generateTrips allTrainStations) (generateTrips (List.rev allTrainStations))
 
 /// Generates a ticket for the trip with the ticket-nr, price and type.
@@ -185,8 +191,7 @@ let rec private createTicketFromTicketType
     match types with
     | t :: types ->
         // Calculate price of ticket
-        let ticketPriceByTicketType =
-            adaptPriceToTicketType t trip.basePrice
+        let ticketPriceByTicketType = adaptPriceToTicketType t trip.basePrice
 
         createTicketForTrip trip ticketNumber ticketPriceByTicketType t departure
         :: createTicketFromTicketType types ticketNumber departure trip
@@ -397,14 +402,35 @@ let rec private compareShoppingCartLists (first: list<ShoppingCartEntry>) (secon
 
 /// Compares two shopping-carts
 let compareCarts (firstCart: UnpaidCart) (secondCart: UnpaidCart) =
-    if firstCart.tickets.Length <> secondCart.tickets.Length then
+    if firstCart.tickets.Length
+       <> secondCart.tickets.Length then
         false
     else
         compareShoppingCartLists firstCart.tickets secondCart.tickets
 
+let private computeTotal (ticketList: list<SimpleTicket>) : float =
+    ticketList
+    |> List.map (fun x -> ((float) x.price) * (float) x.quantity)
+    |> List.fold (+) 0.
+
 /// Computes the total price of the price
-let computeTotalCart (cart: PaidCart) =
-    cart.tickets |> List.map (fun x -> ((float) x.ticket.ticketPrice) * (float) x.quantity) |> List.fold (+) 0.
+let computeTotalPaidCart (cart: PaidCart) =
+    computeTotal (
+        cart.tickets
+        |> List.map
+            (fun x ->
+                { price = x.ticket.ticketPrice
+                  quantity = x.quantity })
+    )
+
+let computeTotalUnpaidCart (cart: UnpaidCart) =
+    computeTotal (
+        cart.tickets
+        |> List.map
+            (fun x ->
+                { price = x.ticket.ticketPrice
+                  quantity = x.quantity })
+    )
 
 type TicketShopApi =
     { requestTicket: RequestTicket
