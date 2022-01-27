@@ -182,20 +182,18 @@ let private adaptPriceToTicketType (ticketType: TicketType) (price: float) =
     | PetTicket -> price * 0.2
 
 /// Generates a ticket for every ticket-type with the ticket-nr and the trip
-let rec private createTicketFromTicketType
+let private createTicketFromTicketType
     (types: list<TicketType>)
     (ticketNumber: int)
     (departure: DateTime)
     (trip: Trip)
     : list<Ticket> =
-    match types with
-    | t :: types ->
-        // Calculate price of ticket
-        let ticketPriceByTicketType = adaptPriceToTicketType t trip.basePrice
-
-        createTicketForTrip trip ticketNumber ticketPriceByTicketType t departure
-        :: createTicketFromTicketType types ticketNumber departure trip
-    | [] -> []
+    types
+    |> List.map
+        (fun t ->
+            // Calculate price of ticket
+            let ticketPriceByTicketType = adaptPriceToTicketType t trip.basePrice
+            createTicketForTrip trip ticketNumber ticketPriceByTicketType t departure)
 
 /// Generates a ticket for every ticket-type with the given ticket-nr
 let private generateTickets (trip: Trip) (ticketNumber: int) : list<Ticket> =
@@ -304,18 +302,17 @@ let private addTicketToCart' (cart: UnpaidCart) (ticket: Ticket) (ticketQuantity
     { tickets = newItem :: newCart }
 
 // Converts the given list of shopping-cart entries to a list of paid-entries.
-let rec private convertUnpaidItemsToPaidItems
+let private convertUnpaidItemsToPaidItems
     (unpaidItems: list<ShoppingCartEntry>)
     (paymentMethod: PaymentMethod)
     : list<PaidCartEntry> =
-    match unpaidItems with
-    | x :: xs ->
-        { ticket = x.ticket
-          quantity = x.quantity
-          orderDate = DateTime.Now
-          paymentMethod = paymentMethod }
-        :: convertUnpaidItemsToPaidItems xs paymentMethod
-    | [] -> []
+    unpaidItems
+    |> List.map
+        (fun x ->
+            { ticket = x.ticket
+              quantity = x.quantity
+              orderDate = DateTime.Now
+              paymentMethod = paymentMethod })
 
 /// Converts the unpaid-cart to a paid cart with the given payment-method.
 let private convertUnpaidCartToPaidCart (unpaidCart: UnpaidCart) (paymentMethod: PaymentMethod) : PaidCart =
