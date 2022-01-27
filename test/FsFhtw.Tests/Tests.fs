@@ -1,43 +1,133 @@
 ﻿module FsFhtw.Tests
 
+open Domain
 open Xunit
 open FsCheck
 
-// [<Fact>]
-// let ``That the laws of reality still apply`` () =
-//     Assert.True(1 = 1)
+[<Fact>]
+let ``That the laws of reality still apply`` () = Assert.True(1 = 1)
 
-// [<Fact>]
-// let ``That incrementing twice on an initialized counter yields 2`` () =
-//     let initialState = Domain.init ()
+[<Fact>]
+let ``That searching for a valid trip yields a result`` () =
+    let initialState = Domain.init ()
 
-//     let actual =
-//         Domain.update Domain.Increment initialState
-//         |> Domain.update Domain.Increment
+    let actual =
+        Domain.update
+            (Domain.SearchTrips
+                { departure = "Vienna"
+                  arrival = "Linz" })
+            initialState
 
-//     let expected = 2
+    let (_, stations, _, _, _) = actual
 
-//     Assert.Equal(expected, actual)
+    Assert.True(stations.Length > 0)
 
-// not the best helper function for property based tests
-// because itselve has testable behavior
-// let getInverse (message : Domain.Message) =
-//     match message with
-//     | Domain.Increment -> Domain.Decrement
-//     | Domain.Decrement -> Domain.Increment
-//     | Domain.IncrementBy x -> Domain.DecrementBy x
-//     | Domain.DecrementBy x -> Domain.IncrementBy x
+[<Fact>]
+let ``That searching for an invalid trip yields no result`` () =
+    let initialState = Domain.init ()
 
-// [<Fact>]
-// let ``That applying the inverse of counter event yields the initial state`` () =
-//     let prop (message : Domain.Message) =
-//         let initialState = Domain.init ()
+    let actual =
+        Domain.update
+            (Domain.SearchTrips
+                { departure = "Bregenz"
+                  arrival = "Vienna" })
+            initialState
 
-//         let actual =
-//             initialState
-//             |> Domain.update message
-//             |> Domain.update (getInverse message)
+    let (_, stations, _, _, _) = actual
 
-//         actual = initialState
+    Assert.True(stations.Length = 0)
 
-//     Check.QuickThrowOnFailure prop
+[<Fact>]
+let ``That requesting for a valid trip yields a result`` () =
+    let initialState = Domain.init ()
+
+    let actual =
+        Domain.update
+            (Domain.RequestTicket
+                { departure = "Vienna"
+                  arrival = "Linz" })
+            initialState
+
+    let (_, stations, _, _, _) = actual
+
+    Assert.True(stations.Length > 0)
+
+[<Fact>]
+let ``That requesting for an invalid trip yields no result`` () =
+    let initialState = Domain.init ()
+
+    let actual =
+        Domain.update
+            (Domain.RequestTicket
+                { departure = "Bregenz"
+                  arrival = "Vienna" })
+            initialState
+
+    let (_, stations, _, _, _) = actual
+
+    Assert.True(stations.Length = 0)
+
+[<Fact>]
+let ``Adding a ticket to the cart`` () =
+    let initialState = Domain.init ()
+
+    let actual =
+        Domain.update
+            (Domain.AddTicketToCart
+                { ticketNr = 100
+                  ticketType = TicketType.AdultTicket
+                  ticketQuantity = 1
+                  })
+            initialState
+
+    let (cart, _, _, _, _) = actual
+
+    Assert.True(cart.tickets.Length > 0)
+
+[<Fact>]
+let ``Trying to add an invalid ticket to the cart`` () =
+    let initialState = Domain.init ()
+
+    let actual =
+        Domain.update
+            (Domain.AddTicketToCart
+                { ticketNr = 1
+                  ticketType = TicketType.AdultTicket
+                  ticketQuantity = 1
+                  })
+            initialState
+
+    let (cart, _, _, _, _) = actual
+
+    Assert.True(cart.tickets.Length = 0)
+
+[<Fact>]
+let ``Removing a ticket from the cart`` () =
+    let initialState = Domain.init ()
+
+    let actual =
+        Domain.update
+            (Domain.AddTicketToCart
+                { ticketNr = 100
+                  ticketType = TicketType.AdultTicket
+                  ticketQuantity = 1
+                  })
+            initialState
+
+    let (cart, _, _, _, _) = actual
+
+    Assert.True(cart.tickets.Length > 0)
+
+    let actual =
+        Domain.update
+            (Domain.RemoveTicketFromCart
+                { ticketNr = 100
+                  ticketType = TicketType.AdultTicket
+                  ticketQuantity = 1
+                  })
+            initialState
+
+    let (cart, _, _, _, _) = actual
+
+    Assert.True(cart.tickets.Length = 0)
+
